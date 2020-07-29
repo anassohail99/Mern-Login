@@ -6,14 +6,17 @@ const connectDataBase = require("./config/DB");
 
 connectDataBase();
 
-let PORT = process.env.PORT || 3000;
+app.use(express.json({ extended: false }));
 
 // routes
 
-app.get("/", (req, res) => {
-  res.send("Home Route");
-});
+app.use("/api/users", require("./routes/users"));
 
+// app.get("/", (req, res) => {
+//   res.send("Home Route");
+// });
+
+let PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
