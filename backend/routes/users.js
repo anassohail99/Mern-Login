@@ -69,6 +69,54 @@ router.post(
 
 // //#region login Router
 
+router.post(
+  "/login",
+  [
+    check("email", "Email is required").isEmail(),
+    check("password", "Password is required").not().isEmpty(),
+  ],
+  async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      let user = await UserSchema.findOne({ email });
+
+      const errors = validationResult(req); // array of errors
+      if (!errors.isEmpty()) {
+        return res.status(401).json({ errors: errors.array() });
+      }
+
+      if (!user) {
+        return res.status(401).json({ msg: "User not found with this email" });
+      }
+
+      let isPassword = await bcryptjs.compare(password, user.password);
+
+      if (isPassword) {
+        let payload = {
+          user: {
+            // this id comes from userCreateIndex
+            id: user.id,
+          },
+        };
+        jwt.sign(
+          payload,
+          config.get("jwtSecret", { expiresIn: 60 * 60 * 12 }),
+          (err, token) => {
+            if (err) throw err;
+            res.json({ token });
+          }
+        );
+      } else {
+        return res.status(401).json({ msg: "Incorrect Password" });
+      }
+    } catch (error) {
+      console.log(error.message);
+      return res.status(500).json({ msg: "Server Error..." });
+    }
+  }
+);
+
 //#endregion
 
 module.exports = router;
